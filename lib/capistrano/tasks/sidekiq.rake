@@ -124,10 +124,16 @@ namespace :sidekiq do
       args.push '--daemon'
     end
 
-    if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-      background :sidekiq, args.compact.join(' ')
-    else
-      execute :sidekiq, args.compact.join(' ')
+    on primary fetch(:sidekiq_role) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
+            background :sidekiq, args.compact.join(' ')
+          else
+            execute :sidekiq, args.compact.join(' ')
+          end
+        end
+      end
     end
   end
 
