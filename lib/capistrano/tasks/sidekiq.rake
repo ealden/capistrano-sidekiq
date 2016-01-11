@@ -65,15 +65,7 @@ namespace :sidekiq do
     on primary fetch(:sidekiq_role) do
       within release_path do
         with rails_env: fetch(:rails_env) do
-          if fetch(:stop_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-            if fetch(:sidekiq_use_signals)
-              background "kill -TERM `cat #{pid_file}`"
-            else
-              background :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
-            end
-          else
-            execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
-          end
+          execute :sidekiqctl, 'stop', "#{pid_file}", fetch(:sidekiq_timeout)
         end
       end
     end
@@ -83,15 +75,11 @@ namespace :sidekiq do
     on primary fetch(:sidekiq_role) do
       within release_path do
         with rails_env: fetch(:rails_env) do
-          if fetch(:sidekiq_use_signals)
-            background "kill -USR1 `cat #{pid_file}`"
-          else
-            begin
-              execute :sidekiqctl, 'quiet', "#{pid_file}"
-            rescue SSHKit::Command::Failed
-              # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
-              warn 'sidekiqctl not found (ignore if this is the first deploy)'
-            end
+          begin
+            execute :sidekiqctl, 'quiet', "#{pid_file}"
+          rescue SSHKit::Command::Failed
+            # If gems are not installed eq(first deploy) and sidekiq_default_hooks as active
+            warn 'sidekiqctl not found (ignore if this is the first deploy)'
           end
         end
       end
@@ -127,11 +115,7 @@ namespace :sidekiq do
     on primary fetch(:sidekiq_role) do
       within release_path do
         with rails_env: fetch(:rails_env) do
-          if fetch(:start_sidekiq_in_background, fetch(:sidekiq_run_in_background))
-            background :sidekiq, args.compact.join(' ')
-          else
-            execute :sidekiq, args.compact.join(' ')
-          end
+          execute :sidekiq, args.compact.join(' ')
         end
       end
     end
